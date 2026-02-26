@@ -104,7 +104,7 @@ class index:
             k_mer = k_mers[k]
             t_i = k_mer[1]
             if p[self.k:] == self.t[t_i + self.k : t_i + len(p) ]:
-                found.append((t_i , t_i + len(p)))
+                found.append(t_i)
 
         return found  
     
@@ -131,3 +131,44 @@ class index:
         return pd.DataFrame({"sequence" : sequences , "start" : starts , "end" : ends})
 
     
+
+def pigeonhole(p , n , t):
+    """
+    p: pattern
+    n: number of mismatches
+
+    """
+    ind = index(t , 8)
+    segment_length = int(round(len(p)/(n + 1)))
+    all_matches = []
+    all_hits = []
+    for i in range(n + 1):
+        start = i * segment_length
+        end = min(start + segment_length , len(p))
+        segment = p[start:end]
+        matches = ind.query(segment)
+        all_hits.append(matches)
+        print(f"segment:{segment} , matches:{matches}")
+        print(f"0:start -> {p[0:start]} , start:end->{p[start:end]} , end:len(p)->{p[end:len(p)]}")
+        for match in matches:
+            n_mismatches = 0
+            if match < start or match - start + len(p) > len(t):
+                continue
+        
+            for j in range(0 , start):
+                if p[j] != t[match - start + j]:
+                    n_mismatches += 1
+                    
+            for j in range(end , len(p)):
+                if p[j] != t[match - start + j]:
+                    n_mismatches += 1
+            
+
+            if n_mismatches <= n:
+                all_matches.append(match - start)
+
+        count_hits = 0 
+        for hit in all_hits:
+            count_hits += len(hit)
+        print(f"hits count : {count_hits}")
+    return list(set(all_matches))
