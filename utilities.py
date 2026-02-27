@@ -1,5 +1,6 @@
 import pandas as pd
 import bisect
+import numpy as np
 class FASTA:
 
     def __init__(self , filename):
@@ -207,3 +208,70 @@ def naive_with_nmismatches(p , t , n):
         if mismatches <= n:
             occurences.append(i)
     return occurences
+
+
+class edit_distance:
+
+    def __init__(self , t_1 , t_2):
+        self.t_1 = t_1
+        self.t_2 = t_2
+        dp = np.zeros((len(t_1) + 1 , len(t_2) + 1))
+        dp[: , 0] = [i for i in range(len(t_1) + 1)]
+        dp[0 , :] = [i for i in range(len(t_2) + 1)]
+        self.rows , self.columns = dp.shape
+        self.dp = dp
+
+        for i in range(1 , self.columns):
+            char_2 = self.t_2[i - 1]
+            for j in range(1 , self.rows):
+                char_1 = t_1[j - 1]
+                if char_1 == char_2:
+                    self.dp[j][i] = self.dp[j - 1][i - 1]
+                else:
+                    self.dp[j][i] = min(1 + self.dp[j-1][i] , 1 + self.dp[j][i - 1] , 1 + self.dp[j - 1][i - 1])
+
+    def get_dp_table(self):
+        return self.dp
+    
+    def get_final_answer(self):
+        return int(self.dp[self.rows - 1][self.columns - 1])
+
+    def __edit(self , t:str, index:int,  edit_type:str, edit = None):
+        
+        new_text = t
+        new_text_array = list(new_text)
+        
+        if edit_type == "substituation" and edit != None:
+            new_text_array[index] = edit
+            return "".join(new_text_array)
+        elif edit_type == "deletion":
+            new_text_array[index] = 'removed'
+            new_text_array.remove("removed")
+            return "".join(new_text_array)
+        elif edit_type == "insertion" :
+            new_text = t[:index] + edit + t[index:]
+            return new_text
+            
+        
+    def back_tracking(self):
+        i = self.columns - 1 
+        j = self.rows - 1
+
+        
+        answer = ""
+        while j >= 0 and i >= 0:
+            char_2 = self.t_2[i - 1]
+            if self.dp[j][i] == 1 + self.dp[j][i-1]:
+                answer = answer + f"1 substitution {j - 1}\n"
+                i = i - 1
+            elif self.dp[j][i] == 1 + self.dp[j - 1][i]:
+                answer = answer + f"1 deletion at {j - 1} \n"
+                j = j - 1
+            elif self.dp[j][i] == 1 + self.dp[j-1][i-1]:
+                answer = answer + f"1 insetion at {j - 1}\n"
+                i = i - 1
+                j = j - 1
+            else:
+                j = j - 1
+                i = i - 1
+        return answer
