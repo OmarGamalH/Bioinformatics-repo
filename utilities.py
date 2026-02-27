@@ -172,3 +172,38 @@ def pigeonhole(p , n , t):
             count_hits += len(hit)
         print(f"hits count : {count_hits}")
     return list(set(all_matches))
+
+
+
+def naive_with_counts(p , t):
+    number_of_alignments = len(t) - len(p) + 1
+    occurences = []
+    num_character_comparisons = 0
+    for i in range(number_of_alignments):
+        matched = True
+        
+        for j in range(len(p)):
+            num_character_comparisons += 1
+            if t[i + j] != p[j]:
+                matched = False
+                break
+        
+        if matched:
+            occurences.append(i)
+    return occurences , number_of_alignments , num_character_comparisons
+        
+
+def naive_with_nmismatches(p , t , n):
+    number_of_alignments = len(t) - len(p) + 1
+    occurences = []
+    num_character_comparisons = 0
+    for i in range(number_of_alignments):
+        mismatches = 0
+        for j in range(len(p)):
+            num_character_comparisons += 1
+            if t[i + j] != p[j]:
+                mismatches += 1
+        
+        if mismatches <= n:
+            occurences.append(i)
+    return occurences
