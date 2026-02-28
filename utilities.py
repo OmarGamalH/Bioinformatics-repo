@@ -275,3 +275,28 @@ class edit_distance:
                 j = j - 1
                 i = i - 1
         return answer
+    
+
+
+class FASTAQ:
+    
+    def __init__(self , filename):
+        self.filename = filename
+
+    def get_all_data(self):
+
+        with open(self.filename , 'r') as f:
+            all_headers   = []
+            all_sequences = []
+            all_qualities = []
+            while True:
+                header = f.readline().strip('\n')
+                all_headers.append(header)
+                sequence = f.readline().strip('\n')
+                all_sequences.append(sequence)
+                f.readline()
+                quality = f.readline().strip('\n')
+                all_qualities.append(quality)
+                if len(header) == 0:
+                    break
+        return (all_headers , all_sequences , all_qualities)
