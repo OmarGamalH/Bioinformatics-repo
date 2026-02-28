@@ -300,3 +300,68 @@ class FASTAQ:
                 if len(header) == 0:
                     break
         return (all_headers , all_sequences , all_qualities)
+
+
+
+class overlap:
+
+    def __init__(self , sequences , k):
+        self.sequences = sequences
+        self.min_length = k
+        self.pre_table = {}
+        for seq in sequences:
+            for i in range(len(seq) - k + 1):
+                start = i
+                end = start + self.min_length
+                subseq = seq[start : end]
+                if subseq not in self.pre_table:
+                    self.pre_table[subseq] = set()
+                self.pre_table[subseq].add(seq)
+        self.table = {}
+        for subseq in self.pre_table:
+            if len(self.pre_table[subseq]) > 1:
+                self.table[subseq] = self.pre_table[subseq]
+        
+
+
+    def get_table(self):
+        return self.table
+
+    def is_empty(self , k_mer):
+        if k_mer in self.table and len(self.table[k_mer]) > 0:
+            return False
+        return True
+    
+    def get_all_sequences(self , k_mer):
+        return self.table[k_mer]
+    
+    def longest_overlap(self , a : str , b : str):
+        prefix = b[:self.min_length]
+        result = 0
+        while True:
+            result = a.find(prefix , result)
+            if result == -1:
+                return 0
+            
+            if b.startswith(a[result:]):
+                return len(a) - result
+            
+            result += 1
+
+
+        
+    
+    def create_graph(self):
+        graph = {}
+        for read in self.sequences:
+            subseq = read[-self.min_length : -1] + read[-1]
+            all_prefix_candidates = self.table.get(subseq)
+            if all_prefix_candidates is not None and len(all_prefix_candidates) >= 1:
+                for prefix_candidate in all_prefix_candidates:
+                    overlap_length = self.longest_overlap(read , prefix_candidate)
+                    if prefix_candidate != read and overlap_length > 0:
+                        graph[(read , prefix_candidate)] = overlap_length
+
+
+
+        return graph
