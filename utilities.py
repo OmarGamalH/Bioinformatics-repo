@@ -365,3 +365,127 @@ class overlap:
 
 
         return graph
+    
+
+class FASTQ:
+    
+    def __init__(self , filename):
+        self.filename = filename
+
+    def get_all_data(self):
+
+        with open(self.filename , 'r') as f:
+            all_headers   = []
+            all_sequences = []
+            all_qualities = []
+            while True:
+                header = f.readline().strip('\n')
+                if len(header) == 0:
+                    break
+                all_headers.append(header)
+                sequence = f.readline().strip('\n')
+                all_sequences.append(sequence)
+                f.readline()
+                quality = f.readline().strip('\n')
+                all_qualities.append(quality)
+        return (all_headers , all_sequences , all_qualities)
+    
+    
+
+
+class scs_index:
+    
+    def __init__(self , sequences , k):
+        self.sequences = sequences
+        self.min_length = k
+        self.table = {}
+        for seq in sequences:
+            for i in range(len(seq) - k + 1):
+                start = i
+                end = start + self.min_length
+                subseq = seq[start : end]
+                if subseq not in self.table:
+                    self.table[subseq] = set()
+                self.table[subseq].add(seq)
+
+    def get_all_sequeces(self , k_mer):
+        return self.table[k_mer]
+    
+    def longest_overlap(self , a : str , b : str):
+        prefix = b[:self.min_length]
+        result = 0
+        while True:
+            result = a.find(prefix , result)
+            if result == -1:
+                return 0
+            
+            if b.startswith(a[result:]):
+                return len(a) - result
+            
+            result += 1
+        
+    def search_index(self , read):
+        suffix = read[-self.min_length:-1] + read[-1]
+        sequences = self.get_all_sequeces(suffix)
+        a = read
+        b = None
+        max_length = 0
+
+        for sequence in sequences:
+            curr_length = self.longest_overlap(a , sequence)
+            if curr_length > max_length and a != sequence:
+                max_length = curr_length
+                b = sequence
+        
+        return a , b , max_length
+    
+    def compute_max_lengths(self):
+        result_a = None
+        result_b = None
+        result_max_length = 0
+        for read in self.sequences:
+            a , b , max_length = self.search_index(read)
+            if max_length > result_max_length:
+                result_a , result_b , result_max_length = a , b , max_length
+        
+        return result_a , result_b , result_max_length
+    
+def merge(a , b , max_length):
+    return a + b[max_length:]
+
+
+
+def overlap_f(a , b , min_length = 1):
+
+    start = 0 
+
+    while True:
+
+        start = a.find(b[:min_length] , start)
+
+        if start == -1:
+            return 0 
+        
+        if b.startswith(a[start:]):
+            return start
+        
+        start = start + 1
+
+def greedy_SCS_optimized(reads):
+    obj = scs_index(reads , 30)
+
+    a , b , max_length = obj.compute_max_lengths()
+    while max_length > 0 or len(reads) > 2:
+        print(len(reads))
+        if b == None:
+            a = reads[0]
+            b = reads[1]
+            max_length = overlap_f(a , b , 30)
+        reads.remove(a)
+        reads.remove(b)
+        result = merge(a , b, max_length)
+        reads.append(result)
+        obj = scs_index(reads , 30)
+        a , b , max_length = obj.compute_max_lengths()
+
+    return reads
